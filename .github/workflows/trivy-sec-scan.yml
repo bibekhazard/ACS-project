@@ -1,0 +1,49 @@
+name: Trivy Scan - Terraform IaC
+
+on:
+  push:
+    branches: [ "terraform" ]
+  pull_request:
+    branches: [ "terraform" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  trivy_scan:
+    name: Trivy IaC Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in IaC mode
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'fs'
+          scan-ref: './terraform'
+
+          security-checks: 'config'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+
+
+          format: 'table'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: always() && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/terraform'))
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        env:
+          TRIVY_RUN_AS_PLUGIN: 'aqua'
+          INPUT_SCAN-TYPE: 'fs'
+          INPUT_SCAN-REF: '.'
+          INPUT_SECURITY-CHECKS: 'config'
+          INPUT_FORMAT: 'sarif'
+          INPUT_OUTPUT: 'trivy-results.sarif'
+          INPUT_EXIT-CODE: '0'
+          INPUT_SEVERITY: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
