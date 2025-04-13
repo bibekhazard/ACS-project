@@ -1,0 +1,11 @@
+---
+- name: Download image from S3 to Cloud9
+  hosts: localhost
+  tasks:
+    - name: Download file from S3
+      amazon.aws.aws_s3:
+        bucket: acs-730-group-bucket
+        object: demo.png
+        dest: ./demo.png
+        mode: get
+        region: us-east-1
