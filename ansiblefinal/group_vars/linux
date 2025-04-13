@@ -1,6 +1,7 @@
 ---
 ansible_user                 : ec2-user 
-ansible_ssh_private_key_file : /home/ec2-user/environment/terraform/webserver/groupkey
+ansible_ssh_private_key_file : /home/ec2-user/environment/ACS-project/webserver/groupkey
 environment: PROD
 Owner: acs730
 shell                        : /bin/bash
+
