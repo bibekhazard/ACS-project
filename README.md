@@ -1,60 +1,35 @@
 ### Deployment Pre-requisites:
 
 1.  **AWS Account:** You need an active AWS account.
-2.  **S3 Bucket for Terraform State:** Create an S3 bucket to store Terraform state. The bucket name should be unique globally. Update the S3 backend in both environments.
-3.  **SSH Key Pair:** You need an SSH key pair in your AWS region (e.g., `us-east-1`). Replace `"your-ssh-key-name"` in `dev/terraform.tfvars` and `prod/terraform.tfvars` with your key pair name.
+2.  **S3 Bucket for Terraform State:** Create an S3 bucket to store Terraform state. The bucket name should be unique globally. Update the S3 backend in all  environments(backend.tf).
+3.  **SSH Key Pair:** You need an SSH key pair in your AWS region (e.g., `us-east-1`). Replace `"your-ssh-key-name"` in `modules/compute/variable.tf` with your key pair name.
 
 ### Deployment Process:
 
 1.  **Clone the Repository:** Clone this repository to your local machine or AWS Cloud9 environment.
-2.  **Initialize Terraform (for dev network):**
+2.  **Initialize Terraform (for dev ):**
     ```bash
-    cd dev/network
+    cd terraform/environment/dev
     terraform init
     terraform plan
     terraform apply --auto-approve
     ```
-3.  **Initialize Terraform (for prod network):**
+3.  **Initialize Terraform (for prod ):**
     ```bash
-    cd ../../prod/network
+    cd terraform/environment/prod
     terraform init
     terraform plan
     terraform apply --auto-approve
     ```
-4.  **Initialize Terraform (for dev instances):**
+4.  **Initialize Terraform (for staging):**
     ```bash
-    cd ../../dev/instances
+    cd terraform/environment/staging
     terraform init
     terraform plan
     terraform apply --auto-approve
-    ```
+    
     *   Note the outputs, especially `bastion_public_ip`, `web_server_public_ips`, and `db_server_private_ips`.
-5.  **Initialize Terraform (for prod instances):**
-    ```bash
-    cd ../../prod/instances
-    terraform init
-    terraform plan
-    terraform apply --auto-approve
-    ```
-    *   Note the outputs, especially `prod_vm_private_ips`.
-6.  **Initialize Terraform (for dev loadbalancer):**
-    ```bash
-    cd ../../dev/loadbalancer
-    terraform init
-    terraform plan
-    terraform apply --auto-approve
-    ```
-    *   Note the output `alb_dns_name`. Access the web servers using this DNS name in your browser.
-7.  **Initialize Terraform (for VPC Peering - Bonus):**
-    ```bash
-    cd ../peering
-    terraform init
-    terraform plan
-    terraform apply --auto-approve
-    ```
-    * After applying peering, you will need to manually update the `prod/instances/main.tf` security group rule to allow SSH from the Nonprod VPC CIDR and re-apply `prod/instances`. Or you can use `terraform import` to manage the SG rule and update the rule via terraform.
 
-### Accessing Resources:
 
 *   **Bastion Host:** SSH to the Bastion Host using the `bastion_public_ip` output from `dev/instances`.
     ```bash
