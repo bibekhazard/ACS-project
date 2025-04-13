@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   security-events: write
+  actions: read
 
 jobs:
   trivy_scan:
@@ -20,30 +21,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner in IaC mode
+      - name: Run Trivy scanner for logs and build failure
+        id: trivy_scan_log
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: 'fs'
           scan-ref: './terraform'
-
-          security-checks: 'config'
+          scanners: 'config'
           severity: 'HIGH,CRITICAL'
-          exit-code: '1'
-
-
+          exit-code: '1' # Fail build if HIGH/CRITICAL issues are found
           format: 'table'
+        continue-on-error: true # Continue even if issues are found, to allow SARIF generation
 
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Generate Trivy SARIF report
+        if: always()
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'fs'
+          scan-ref: './terraform'
+          scanners: 'config'
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+          exit-code: '0' # Do NOT fail the build based on SARIF generation
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy SARIF report to GitHub Security tab
         if: always() && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/terraform'))
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
-        env:
-          TRIVY_RUN_AS_PLUGIN: 'aqua'
-          INPUT_SCAN-TYPE: 'fs'
-          INPUT_SCAN-REF: '.'
-          INPUT_SECURITY-CHECKS: 'config'
-          INPUT_FORMAT: 'sarif'
-          INPUT_OUTPUT: 'trivy-results.sarif'
-          INPUT_EXIT-CODE: '0'
-          INPUT_SEVERITY: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+
+      # Check the exit code of the first scan step and explicitly fail the job if needed
+      - name: Check scan results for build failure
+        if: steps.trivy_scan_log.outcome == 'failure'
+        run: |
+          echo "Trivy scan found issues of HIGH or CRITICAL severity."
+          exit 1
