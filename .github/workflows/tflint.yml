@@ -1,7 +1,7 @@
 name: Perform Terraform Linting
 on:
   push:
-    branches: [ terraform ]
+    branches: [ staging ]
   pull_request:
 
 jobs:

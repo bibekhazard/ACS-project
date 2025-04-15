@@ -2,9 +2,9 @@ name: Trivy Scan - Terraform IaC
 
 on:
   push:
-    branches: [ "terraform" ]
+    branches: [ "staging" ]
   pull_request:
-    branches: [ "terraform" ]
+    branches: [ "staging" ]
   workflow_dispatch:
 
 permissions:
