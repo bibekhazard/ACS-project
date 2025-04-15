@@ -1,67 +1,92 @@
 ---
-- name: Install Python 3.8 on Amazon Linux
+- name: Install Python 3.11 on Amazon Linux 2
   hosts: tag_acs730
   become: yes
-  gather_facts: false  # Disable facts for this play
+  gather_facts: false
   vars:
     ansible_user: ec2-user
 
   tasks:
-    - name: Install Python 3.11 (Amazon Linux 2)
-      raw: |
-        sudo yum update -y
-        sudo amazon-linux-extras enable python3.11
-        sudo yum install -y python3.11
-        sudo alternatives --set python3 /usr/bin/python3.11
+    - name: Install build dependencies
+      yum:
+        name:
+          - gcc
+          - make
+          - openssl-devel
+          - bzip2-devel
+          - libffi-devel
+          - zlib-devel
+          - readline-devel
+          - sqlite-devel
+          - xz-devel
+        state: present
 
-- name: Install and verify Apache Web Server on Amazon Linux
+    - name: Download Python 3.11 source
+      get_url:
+        url: https://www.python.org/ftp/python/3.11.9/Python-3.11.9.tgz
+        dest: /tmp/Python-3.11.9.tgz
+
+    - name: Extract source code
+      unarchive:
+        src: /tmp/Python-3.11.9.tgz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Compile and install Python 3.11
+      command:
+        chdir: /tmp/Python-3.11.9
+        cmd: |
+          ./configure --enable-optimizations
+          make -j $(nproc)
+          make altinstall
+
+    - name: Create python3 symlink
+      file:
+        src: /usr/local/bin/python3.11
+        dest: /usr/bin/python3
+        state: link
+        force: yes
+
+- name: Install and configure Apache
   hosts: tag_acs730
   become: yes
-  gather_facts: True  # Now safe to gather facts
+  gather_facts: true
   vars:
     ansible_user: ec2-user
-    ansible_python_interpreter: /usr/bin/python3.8  # Explicit Python 3.8 path
+    ansible_python_interpreter: /usr/bin/python3
     image_source: ./demo.png
     image_dest: /var/www/html/demo.png
     source_file: ./index.html
     dest_file: /var/www/html/index.html
 
   tasks:
-    - name: Install Apache using dnf module
-      ansible.builtin.dnf:
+    - name: Install Apache
+      yum:
         name: httpd
         state: latest
-        use_backend: dnf4  # For Amazon Linux 2
-      when: ansible_pkg_mgr == "dnf"
 
-    - name: Install Apache using yum module
-      ansible.builtin.yum:
-        name: httpd
-        state: latest
-      when: ansible_pkg_mgr == "yum"
-
-    - name: Start and enable Apache service
-      ansible.builtin.service:
+    - name: Start and enable Apache
+      service:
         name: httpd
         state: started
         enabled: yes
 
     - name: Wait for Apache to start
-      ansible.builtin.wait_for:
+      wait_for:
         port: 80
         state: started
         delay: 5
         timeout: 30
     
-    - name: Copy index.html
-      ansible.builtin.copy:
+    - name: Deploy index.html
+      copy:
         src: "{{ source_file }}"
         dest: "{{ dest_file }}"
         mode: '0644'
       notify: Restart Httpd
       
-    - name: Copy Image file
-      ansible.builtin.copy:
+    - name: Deploy demo image
+      copy:
         src: "{{ image_source }}"
         dest: "{{ image_dest }}"
         mode: '0644'
@@ -69,6 +94,6 @@
 
   handlers:
     - name: Restart Httpd
-      ansible.builtin.service:
+      service:
         name: httpd
         state: restarted
