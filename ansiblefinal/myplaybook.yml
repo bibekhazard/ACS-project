@@ -15,6 +15,7 @@
       yum:
         name: httpd
         state: latest
+        use_backend: dnf4
 
     - name: Start and enable Apache service on Amazon Linux
       service:
