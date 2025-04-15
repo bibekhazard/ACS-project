@@ -12,7 +12,7 @@ resource "aws_lb" "web" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_security_group_id]
-  subnets            = var.public_subnet_ids # Use all available public subnets
+  subnets            = var.public_subnet_ids
 
   tags = merge(var.tags, {
     Name = "${var.group_name}-${var.environment}-ALB"
@@ -77,16 +77,19 @@ resource "aws_launch_template" "web" {
 
 resource "aws_autoscaling_group" "web" {
   name                = "${var.group_name}-${var.environment}-ASG"
-  min_size            = 0
-  max_size            = 2
-  desired_capacity    = 0
-  vpc_zone_identifier = var.public_subnet_ids # Use all available public subnets
-
+  min_size            = 1
+  max_size            = 5
+  desired_capacity    = 1
+  vpc_zone_identifier = var.public_subnet_ids
   target_group_arns    = [aws_lb_target_group.web.arn]
+
   launch_template {
     id      = aws_launch_template.web.id
     version = "$Latest"
   }
+
+  health_check_grace_period = 300  # 5 minutes
+  default_cooldown          = 60   # 1 minute
 
   tag {
     key                 = "Name"
@@ -101,5 +104,45 @@ resource "aws_autoscaling_group" "web" {
       value               = tag.value
       propagate_at_launch = true
     }
+  }
+}
+
+# Target Tracking Scaling Policy (Dynamic Scaling)
+resource "aws_autoscaling_policy" "cpu_target_tracking" {
+  name                   = "${var.group_name}-${var.environment}-cpu-target-tracking"
+  policy_type            = "TargetTrackingScaling"
+  autoscaling_group_name = aws_autoscaling_group.web.name
+
+  target_tracking_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ASGAverageCPUUtilization"
+    }
+    target_value = 50.0
+  }
+}
+
+# Predictive Scaling Policy
+resource "aws_autoscaling_policy" "predictive_scaling" {
+  name                   = "${var.group_name}-${var.environment}-predictive-scaling"
+  policy_type            = "PredictiveScaling"
+  autoscaling_group_name = aws_autoscaling_group.web.name
+
+  predictive_scaling_configuration {
+    metric_specification {
+      target_value = 50
+      predefined_scaling_metric_specification {
+        predefined_metric_type = "ASGAverageCPUUtilization"
+        resource_label         = "predefined"
+      }
+      predefined_load_metric_specification {
+        predefined_metric_type = "ASGTotalCPUUtilization"
+        resource_label         = "predefined"
+      }
+    }
+
+    mode                         = "ForecastAndScale"
+    scheduling_buffer_time       = 120
+    max_capacity_breach_behavior = "IncreaseMaxCapacity"
+    max_capacity_buffer          = 10
   }
 }

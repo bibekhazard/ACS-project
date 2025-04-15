@@ -94,7 +94,7 @@ resource "aws_security_group" "bastion" {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
-    security_groups = [var.ssh_access_cidr]
+    cidr_blocks = [var.ssh_access_cidr]
   }
 
   egress {
@@ -152,7 +152,7 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "public_web" {
-  count         = 3
+  count         = 2
   ami           = data.aws_ami.latest_amazon_linux.id
   instance_type = var.instance_type
   subnet_id     = element(var.public_subnet_ids, count.index % length(var.public_subnet_ids))
@@ -163,6 +163,7 @@ resource "aws_instance" "public_web" {
   tags = merge(local.tags, {
     Name = "${var.group_name}-${var.environment}-WebServer-${count.index + 1}"
     Role = "PublicWeb"
+    Owner = "acs730"
   })
 }
 

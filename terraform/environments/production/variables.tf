@@ -25,13 +25,13 @@ variable "vpc_cidr" {
 variable "web_instance_type" {
   description = "EC2 instance type for web servers"
   type        = string
-  default     = "t3.medium"
+  default     = "t2.micro"
 }
 
 variable "db_instance_type" {
   description = "EC2 instance type for database"
   type        = string
-  default     = "t3.medium"
+  default     = "t2.micro"
 }
 
 variable "key_name" {

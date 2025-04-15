@@ -43,7 +43,6 @@ module "alb_asg" {
 locals {
   tags = merge(var.tags, {
     Environment = var.environment
-    Owner       = var.group_name
     Project     = var.project_name
     ManagedBy   = "Terraform"
   })
