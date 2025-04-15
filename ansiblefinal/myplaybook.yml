@@ -4,49 +4,56 @@
   become: yes
   gather_facts: True
   vars:
-    ansible_user: ec2-user 
+    ansible_user: ec2-user
+    ansible_python_interpreter: /usr/bin/python3  # Explicit Python 3 path
     image_source: ./demo.png
     image_dest: /var/www/html/demo.png
     source_file: ./index.html
     dest_file: /var/www/html/index.html
 
   tasks:
-    - name: Install Apache on Amazon Linux
-      yum:
+    - name: Install Apache using dnf module
+      ansible.builtin.dnf:
         name: httpd
         state: latest
-        use_backend: dnf4
+        use_backend: dnf5  # For Amazon Linux 2023, use dnf4 for AL2
+      when: ansible_pkg_mgr == "dnf"
 
-    - name: Start and enable Apache service on Amazon Linux
-      service:
+    - name: Install Apache using yum module
+      ansible.builtin.yum:
+        name: httpd
+        state: latest
+      when: ansible_pkg_mgr == "yum"
+
+    - name: Start and enable Apache service
+      ansible.builtin.service:
         name: httpd
         state: started
         enabled: yes
 
     - name: Wait for Apache to start
-      wait_for:
+      ansible.builtin.wait_for:
         port: 80
         state: started
         delay: 5
         timeout: 30
     
     - name: Copy index.html
-      copy:
+      ansible.builtin.copy:
         src: "{{ source_file }}"
         dest: "{{ dest_file }}"
-        mode: '0555'
+        mode: '0644'  # Changed from 0555 (directories need execute, files need read)
       notify: Restart Httpd
       
     - name: Copy Image file
-      copy:
+      ansible.builtin.copy:
         src: "{{ image_source }}"
         dest: "{{ image_dest }}"
         mode: '0644'
       notify: Restart Httpd
       
-    
   handlers:
     - name: Restart Httpd
-      service:
+      ansible.builtin.service:
         name: httpd
         state: restarted
