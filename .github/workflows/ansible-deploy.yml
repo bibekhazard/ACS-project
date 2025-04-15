@@ -36,7 +36,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install Ansible and AWS dependencies
-        run:
+        run: |
           python -m pip install --upgrade pip
           pip install ansible boto3 botocore
 
@@ -51,35 +51,36 @@ jobs:
       - name: Set up SSH key for Ansible
         env:
           SSH_PRIVATE_KEY: ${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}
-        run:
+        run: |
           mkdir -p ~/.ssh
           echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_ansible_runner
           chmod 600 ~/.ssh/id_ansible_runner
 
       - name: Check Ansible Version and AWS CLI
-        run:
+        run: |
           ansible --version
           aws sts get-caller-identity
 
       - name: Upload demo image to S3
         env:
           S3_BUCKET: ${{ secrets.S3_BUCKET_NAME }}
-        run:
+        run: |
           echo "Uploading demo.png to S3 bucket: ${S3_BUCKET}"
           aws s3 cp ./demo.png s3://${S3_BUCKET}/demo.png
-          echo "Upload completee."
+          # Corrected typo: completee -> complete
+          echo "Upload complete."
 
       - name: Run Main Configuration Playbook (Dynamic Inventory)
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_REMOTE_USER: ${{ secrets.ANSIBLE_REMOTE_USER || 'ec2-user' }}
-        run:
+        run: |
           echo "Running myplaybook.yml..."
           ansible-playbook --config ansible_dynamic.cfg myplaybook.yml --private-key ~/.ssh/id_ansible_runner
           echo "myplaybook.yml finished."
 
       - name: Clean up SSH key
         if: always()
-        run:
+        run: |
           echo "Removing SSH key..."
           rm -f ~/.ssh/id_ansible_runner
