@@ -1,10 +1,12 @@
 name: Deploy Terraform
 on:
+  workflow_dispatch:
   push:
     branches:
       - terraform
     paths:
       - 'terraform/environments/production/**'
+      - 'terraform/modules/**'
       # - 'terraform/environments/staging/**'
       # - 'terraform/environments/dev/**'
       - '.github/workflows/terraform-deploy.yml'
