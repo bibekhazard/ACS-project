@@ -77,6 +77,7 @@
  sudo vi /ansiblefinal/ansible_dynamic.cfg
   
  Update or add the following lines:
+ 
  [defaults]
  #inventory = /home/sungold/projects/seneca/ACS/ACS-project/ansiblefinal/hosts.txt
  inventory = ./aws_ec2.yml
