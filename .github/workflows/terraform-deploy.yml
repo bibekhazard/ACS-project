@@ -1,0 +1,155 @@
+name: Deploy Terraform
+on:
+  push:
+    branches:
+      - terraform
+    paths:
+      - 'terraform/environments/production/**'
+      # - 'terraform/environments/staging/**'
+      # - 'terraform/environments/dev/**'
+      - '.github/workflows/terraform-deploy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-production:
+    name: Terraform Deploy to AWS Production
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: terraform-deploy-production
+      cancel-in-progress: false
+
+    defaults:
+      run:
+        working-directory: ./terraform/environments/production
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials from Secrets
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init (Production)
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate (Production)
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan (Production)
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+
+      - name: Terraform Apply (Production)
+        id: apply
+        if: steps.plan.outcome == 'success'
+        run: terraform apply -auto-approve -input=false tfplan
+
+  # deploy-staging:
+  #   name: Terraform Deploy to AWS Staging
+  #   runs-on: ubuntu-latest
+
+  #   concurrency:
+  #     group: terraform-deploy-staging
+  #     cancel-in-progress: false
+
+  #   defaults:
+  #     run:
+  #       working-directory: ./terraform/environments/staging
+  #       shell: bash
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+
+  #     - name: Configure AWS Credentials from Secrets
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+  #         aws-region: us-east-1
+
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_wrapper: false
+
+  #     - name: Terraform Init (Staging)
+  #       id: init
+  #       run: terraform init
+
+  #     - name: Terraform Validate (Staging)
+  #       id: validate
+  #       run: terraform validate
+
+  #     - name: Terraform Plan (Staging)
+  #       id: plan
+  #       run: terraform plan -no-color -out=tfplan
+
+  #     - name: Terraform Apply (Staging)
+  #       id: apply
+  #       if: steps.plan.outcome == 'success'
+  #       run: terraform apply -auto-approve -input=false tfplan
+
+  # deploy-dev:
+  #   name: Terraform Deploy to AWS Dev
+  #   runs-on: ubuntu-latest
+
+  #   concurrency:
+  #     group: terraform-deploy-dev
+  #     cancel-in-progress: false
+
+  #   defaults:
+  #     run:
+  #       working-directory: ./terraform/environments/dev
+  #       shell: bash
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+
+  #     - name: Configure AWS Credentials from Secrets
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+  #         aws-region: us-east-1
+
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_wrapper: false
+
+  #     - name: Terraform Init (Dev)
+  #       id: init
+  #       run: terraform init
+
+  #     - name: Terraform Validate (Dev)
+  #       id: validate
+  #       run: terraform validate
+
+  #     - name: Terraform Plan (Dev)
+  #       id: plan
+  #       run: terraform plan -no-color -out=tfplan
+
+  #     - name: Terraform Apply (Dev)
+  #       id: apply
+  #       if: steps.plan.outcome == 'success'
+  #       run: terraform apply -auto-approve -input=false tfplan
