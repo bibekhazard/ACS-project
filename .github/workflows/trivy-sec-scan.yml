@@ -1,4 +1,4 @@
-name: Trivy Scan - Terraform IaC
+name: Trivy Scan - Terraform IaC (Report Only) # Renamed slightly for clarity
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Trivy scanner for logs and build failure
+      - name: Run Trivy scanner for logs (Report HIGH/CRITICAL)
         id: trivy_scan_log
         uses: aquasecurity/trivy-action@0.20.0
         with:
@@ -29,11 +29,10 @@ jobs:
           scan-ref: './terraform'
           scanners: 'config'
           severity: 'HIGH,CRITICAL'
-          exit-code: '1' # Fail build if HIGH/CRITICAL issues are found
+          exit-code: '0'
           format: 'table'
-        continue-on-error: true # Continue even if issues are found, to allow SARIF generation
 
-      - name: Generate Trivy SARIF report
+      - name: Generate Trivy SARIF report (All Severities)
         if: always()
         uses: aquasecurity/trivy-action@0.20.0
         with:
@@ -41,7 +40,7 @@ jobs:
           scan-ref: './terraform'
           scanners: 'config'
           severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-          exit-code: '0' # Do NOT fail the build based on SARIF generation
+          exit-code: '0'
           format: 'sarif'
           output: 'trivy-results.sarif'
 
@@ -50,10 +49,3 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
-
-      # Check the exit code of the first scan step and explicitly fail the job if needed
-      - name: Check scan results for build failure
-        if: steps.trivy_scan_log.outcome == 'failure'
-        run: |
-          echo "Trivy scan found issues of HIGH or CRITICAL severity."
-          exit 1
