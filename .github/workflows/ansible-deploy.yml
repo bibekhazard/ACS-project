@@ -1,0 +1,85 @@
+name: Deploy Configuration with Ansible
+
+on:
+  push:
+    branches:
+      - ansible
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Deploy Terraform"]
+    types:
+      - completed
+    branches:
+      - terraform
+      - prod
+
+permissions:
+  contents: read
+
+jobs:
+  ansible-deploy:
+    name: Run Ansible Playbooks
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./ansiblefinal
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible and AWS dependencies
+        run:
+          python -m pip install --upgrade pip
+          pip install ansible boto3 botocore
+
+      - name: Configure AWS Credentials from Secrets
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Set up SSH key for Ansible
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}
+        run:
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_ansible_runner
+          chmod 600 ~/.ssh/id_ansible_runner
+
+      - name: Check Ansible Version and AWS CLI
+        run:
+          ansible --version
+          aws sts get-caller-identity
+
+      - name: Upload demo image to S3
+        env:
+          S3_BUCKET: ${{ secrets.S3_BUCKET_NAME }}
+        run:
+          echo "Uploading demo.png to S3 bucket: ${S3_BUCKET}"
+          aws s3 cp ./demo.png s3://${S3_BUCKET}/demo.png
+          echo "Upload completee."
+
+      - name: Run Main Configuration Playbook (Dynamic Inventory)
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_REMOTE_USER: ${{ secrets.ANSIBLE_REMOTE_USER || 'ec2-user' }}
+        run:
+          echo "Running myplaybook.yml..."
+          ansible-playbook --config ansible_dynamic.cfg myplaybook.yml --private-key ~/.ssh/id_ansible_runner
+          echo "myplaybook.yml finished."
+
+      - name: Clean up SSH key
+        if: always()
+        run:
+          echo "Removing SSH key..."
+          rm -f ~/.ssh/id_ansible_runner
