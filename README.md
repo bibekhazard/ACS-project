@@ -2,7 +2,7 @@
 
 1.  **AWS Account:** You need an active AWS account.
 2.  **S3 Bucket for Terraform State:** Create an S3 bucket to store Terraform state. The bucket name should be unique globally. Update the S3 backend in all  environments(backend.tf).
-3.  **SSH Key Pair:** You need an SSH key pair in your AWS region (e.g., `us-east-1`). Replace `"your-ssh-key-name"` in `modules/compute/variable.tf` with your key pair name.
+3.  **SSH Key Pair:** You need an SSH key pair in your AWS region (e.g., `us-east-1`). Replace `"your-ssh-key-name"` in `environment/prod/variable.tf` with your key pair name.
 
 ### Deployment Process:
 
@@ -50,36 +50,22 @@
 
 The cleanup process is the reverse of the deployment. **Destroy resources in reverse order of creation (generally):**
 
-1.  **Destroy Load Balancer (dev):**
+1.  **Destroy  (dev):**
     ```bash
-    cd dev/loadbalancer
+        cd terraform/environment/dev
     terraform destroy --auto-approve
     ```
-2.  **Destroy Instances (prod):**
+2.  **Destroy  (prod):**
     ```bash
-    cd ../../prod/instances
+    cd ../environment/prod/
     terraform destroy --auto-approve
     ```
-3.  **Destroy Instances (dev):**
+3.  **Destroy (staging):**
     ```bash
-    cd ../../dev/instances
+    cd ../../dev/staging
     terraform destroy --auto-approve
     ```
-4.  **Destroy VPC Peering:**
-    ```bash
-    cd ../../peering
-    terraform destroy --auto-approve
-    ```
-5.  **Destroy Network (prod):**
-    ```bash
-    cd ../../prod/network
-    terraform destroy --auto-approve
-    ```
-6.  **Destroy Network (dev):**
-    ```bash
-    cd ../../dev/network
-    terraform destroy --auto-approve
-    ```
+
 
 **Important Notes:**
 
