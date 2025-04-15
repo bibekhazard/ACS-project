@@ -72,11 +72,12 @@ jobs:
 
       - name: Run Main Configuration Playbook (Dynamic Inventory)
         env:
+          ANSIBLE_CONFIG: ansible_dynamic.cfg
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_REMOTE_USER: ${{ secrets.ANSIBLE_REMOTE_USER || 'ec2-user' }}
         run: |
           echo "Running myplaybook.yml..."
-          ansible-playbook --config ansible_dynamic.cfg myplaybook.yml --private-key ~/.ssh/id_ansible_runner
+          ansible-playbook myplaybook.yml --private-key ~/.ssh/id_ansible_runner
           echo "myplaybook.yml finished."
 
       - name: Clean up SSH key
