@@ -73,4 +73,4 @@ The cleanup process is the reverse of the deployment. **Destroy resources in rev
 *   Review the security group rules and adjust them according to your security requirements, especially for ingress CIDR blocks.
 *   This code provides a basic implementation. You might need to customize it further based on specific requirements or best practices.
 *   Always run `terraform plan` before `terraform apply` to review the changes.
-*   Be cautious when using `--auto-approve` in production environments.
+*   Be cautious when using `--auto-approve` in production environment.
