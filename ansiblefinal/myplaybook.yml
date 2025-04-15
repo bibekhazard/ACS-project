@@ -7,12 +7,12 @@
     ansible_user: ec2-user
 
   tasks:
-    - name: Install Python 3.8 (Amazon Linux 2)
+    - name: Install Python 3.11 (Amazon Linux 2)
       raw: |
         sudo yum update -y
-        sudo amazon-linux-extras enable python3.8
-        sudo yum install -y python3.8
-        sudo alternatives --set python3 /usr/bin/python3.8
+        sudo amazon-linux-extras enable python3.11
+        sudo yum install -y python3.11
+        sudo alternatives --set python3 /usr/bin/python3.11
 
 - name: Install and verify Apache Web Server on Amazon Linux
   hosts: tag_acs730
