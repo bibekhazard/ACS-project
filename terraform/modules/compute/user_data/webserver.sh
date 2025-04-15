@@ -1,6 +1,10 @@
 #!/bin/bash
 yum update -y
-yum install -y httpd
+yum install -y python3.8 httpd
+# Set Python 3.8 as default
+alternatives --set python3 /usr/bin/python3.8
+# Verify Python version
+python3 --versio
 systemctl start httpd
 systemctl enable httpd
 
