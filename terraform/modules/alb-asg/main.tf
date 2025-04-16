@@ -117,7 +117,7 @@ resource "aws_autoscaling_policy" "cpu_target_tracking" {
     predefined_metric_specification {
       predefined_metric_type = "ASGAverageCPUUtilization"
     }
-    target_value = 50.0
+    target_value = 25.0
   }
 }
 
@@ -129,7 +129,7 @@ resource "aws_autoscaling_policy" "predictive_scaling" {
 
   predictive_scaling_configuration {
     metric_specification {
-      target_value = 50
+      target_value = 25
       predefined_scaling_metric_specification {
         predefined_metric_type = "ASGAverageCPUUtilization"
         resource_label         = "predefined"
@@ -141,7 +141,7 @@ resource "aws_autoscaling_policy" "predictive_scaling" {
     }
 
     mode                         = "ForecastAndScale"
-    scheduling_buffer_time       = 120
+    scheduling_buffer_time       = 60
     max_capacity_breach_behavior = "IncreaseMaxCapacity"
     max_capacity_buffer          = 10
   }
