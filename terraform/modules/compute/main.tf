@@ -234,6 +234,7 @@ resource "aws_instance" "database" {
   user_data              = <<-EOF
               #!/bin/bash
               yum update -y
+              sleep 50
               yum install -y postgresql-server
               postgresql-setup initdb
               systemctl start postgresql
