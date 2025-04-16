@@ -162,13 +162,18 @@ resource "aws_instance" "public_web" {
               #!/bin/bash
               set -x
               yum update -y
-              amazon-linux-extras enable python3.8
-              yum clean metadata
-              yum install -y python3.8 python3-pip
-              alternatives --set python /usr/bin/python3.8
-              alternatives --set python3 /usr/bin/python3.8
-              ln -sf /usr/local/bin/python3.8 /usr/bin/python
-              ln -sf /usr/local/bin/pip3.8 /usr/bin/pip
+              set -euxo pipefail
+              yum groupinstall -y "Development Tools"
+              yum install -y gcc openssl-devel bzip2-devel libffi-devel wget make
+              cd /usr/src
+              wget https://www.python.org/ftp/python/3.8.18/Python-3.8.18.tgz
+              tar xzf Python-3.8.18.tgz
+              cd Python-3.8.18
+              ./configure --enable-optimizations
+              make altinstall
+              ln -sf /usr/local/bin/python3.8 /usr/bin/python3
+              ln -sf /usr/local/bin/pip3.8 /usr/bin/pip3
+              python3 --version
               yum install -y httpd
               systemctl start httpd
               systemctl enable httpd
