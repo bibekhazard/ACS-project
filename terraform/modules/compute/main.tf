@@ -238,7 +238,6 @@ resource "aws_instance" "database" {
               postgresql-setup initdb
               systemctl start postgresql
               systemctl enable postgresql
-
               PGDATA=$(sudo -u postgres psql -t -c "SHOW data_directory")
               sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" $PGDATA/postgresql.conf
               echo "host all all 0.0.0.0/0 trust" >> $PGDATA/pg_hba.conf
