@@ -160,6 +160,9 @@ resource "aws_instance" "public_web" {
   key_name               = var.key_name
   user_data              = <<-EOF
               #!/bin/bash
+              amazon-linux-extras enable python3.8
+              yum install -y python3.8 python3-pip
+              alternatives --set python3 /usr/bin/python3.8
               yum install -y httpd
               systemctl start httpd
               systemctl enable httpd
