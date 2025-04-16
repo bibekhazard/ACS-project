@@ -1,6 +1,5 @@
 name: Deploy Terraform
 on:
-  workflow_dispatch:
   push:
     branches:
       - terraform
@@ -10,6 +9,7 @@ on:
       # - 'terraform/environments/staging/**'
       # - 'terraform/environments/dev/**'
       - '.github/workflows/terraform-deploy.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
