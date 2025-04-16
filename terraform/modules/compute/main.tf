@@ -197,9 +197,9 @@ resource "aws_instance" "public_web" {
               <body>
                   <div class="content">
                       <h1>Hello from ACS730 Group Project</h1>
-                      <p>Environment: ${environment}</p>
+                      <p>Environment: ${var.environment}</p>
                       <p>Public IP: $PUBLIC_IP</p>
-                      <p>Instance Type: ${instance_type}</p>
+                      <p>Instance Type: ${var.instance_type}</p>
                   </div>
               </body>
               </html>
