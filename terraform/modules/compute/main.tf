@@ -89,11 +89,11 @@ resource "aws_security_group" "bastion" {
     protocol    = "tcp"
     cidr_blocks = [var.ssh_access_cidr]
   }
-  
- ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     cidr_blocks = [var.ssh_access_cidr]
   }
 
@@ -140,11 +140,11 @@ resource "aws_security_group" "database" {
 resource "aws_instance" "bastion" {
   ami                    = data.aws_ami.latest_amazon_linux.id
   instance_type          = var.instance_type
-  subnet_id              = var.public_subnet_ids[1] # Using index 1 (second subnet)
+  subnet_id              = var.public_subnet_ids[1]
   vpc_security_group_ids = [aws_security_group.bastion.id]
   key_name               = var.key_name
-  user_data             = file("${path.module}/user_data/webserver.sh")
-  
+  user_data              = file("${path.module}/user_data/webserver.sh")
+
   tags = merge(local.tags, {
     Name = "${var.group_name}-${var.environment}-Bastion"
     Role = "Bastion"
@@ -152,13 +152,13 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "public_web" {
-  count         = 2
-  ami           = data.aws_ami.latest_amazon_linux.id
-  instance_type = var.instance_type
-  subnet_id     = element(var.public_subnet_ids, count.index % length(var.public_subnet_ids))
+  count                  = 2
+  ami                    = data.aws_ami.latest_amazon_linux.id
+  instance_type          = var.instance_type
+  subnet_id              = element(var.public_subnet_ids, count.index % length(var.public_subnet_ids))
   vpc_security_group_ids = [aws_security_group.public_web.id]
   key_name               = var.key_name
-  user_data = <<-EOF
+  user_data              = <<-EOF
               #!/bin/bash
               set -x
               yum update -y
@@ -170,10 +170,9 @@ resource "aws_instance" "public_web" {
               yum install -y httpd
               systemctl start httpd
               systemctl enable httpd
-              
               PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-              
-              cat <<EOF > /var/www/html/index.html
+
+              cat <<EOT > /var/www/html/index.html
               <!DOCTYPE html>
               <html>
               <head>
@@ -204,15 +203,14 @@ resource "aws_instance" "public_web" {
                   </div>
               </body>
               </html>
-              EOF
+              EOT
               chmod 644 /var/www/html/index.html
               systemctl restart httpd
               EOF
-  
 
   tags = merge(local.tags, {
-    Name = "${var.group_name}-${var.environment}-WebServer-${count.index + 1}"
-    Role = "PublicWeb"
+    Name  = "${var.group_name}-${var.environment}-WebServer-${count.index + 1}"
+    Role  = "PublicWeb"
     Owner = "acs730"
   })
 }
@@ -237,24 +235,18 @@ resource "aws_instance" "database" {
   subnet_id              = var.private_subnet_ids[1]
   vpc_security_group_ids = [aws_security_group.database.id]
   key_name               = var.key_name
-  user_data = <<-EOF
+  user_data              = <<-EOF
               #!/bin/bash
               yum update -y
-              yum install -y postgresql-server # Example DB - PostgreSQL
+              yum install -y postgresql-server
               postgresql-setup initdb
               systemctl start postgresql
               systemctl enable postgresql
 
-              # Allow remote connections to PostgreSQL - AUTOMATED CONFIGURATION
-              PGDATA=$(sudo -u postgres psql -t -c "SHOW data_directory") # Get PGDATA directory
-              echo "Updating postgresql.conf to listen on all interfaces..."
-              sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" $PGDATA/postgresql.conf # Modify listen_addresses
-
-              echo "Updating pg_hba.conf to allow connections from all IPs (0.0.0.0/0)"
-              sudo sed -i "\$ a host all all 0.0.0.0/0 trust" $PGDATA/pg_hba.conf
-
-              echo "Restarting postgresql service to apply changes..."
-              sudo systemctl restart postgresql
+              PGDATA=$(sudo -u postgres psql -t -c "SHOW data_directory")
+              sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" $PGDATA/postgresql.conf
+              echo "host all all 0.0.0.0/0 trust" >> $PGDATA/pg_hba.conf
+              systemctl restart postgresql
               EOF
 
   tags = merge(local.tags, {
