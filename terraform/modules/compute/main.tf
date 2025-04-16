@@ -163,10 +163,12 @@ resource "aws_instance" "public_web" {
               set -x
               yum update -y
               amazon-linux-extras enable python3.8
+              yum clean metadata
               yum install -y python3.8 python3-pip
-              yum install -y python3-devel gcc
               alternatives --set python /usr/bin/python3.8
               alternatives --set python3 /usr/bin/python3.8
+              ln -sf /usr/local/bin/python3.8 /usr/bin/python
+              ln -sf /usr/local/bin/pip3.8 /usr/bin/pip
               yum install -y httpd
               systemctl start httpd
               systemctl enable httpd
