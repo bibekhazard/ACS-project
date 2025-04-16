@@ -44,7 +44,7 @@
     sudo yum install -y postgresql
     psql -h <db_server_private_ip> -p 5432 -U postgres
     ```
-*   **Prod VMs (VM5 & VM6):** After VPC peering, you can SSH to the Prod VMs from the Bastion Host. Update the `prod_vm_sg` security group in `prod/instances/main.tf` to allow SSH from the Nonprod VPC CIDR or Bastion SG.
+*   **Prod VMs (VM5 & VM6):**  you can SSH to the Prod VMs from the Bastion Host. Update the `prod_vm_sg` security group in `prod/instances/main.tf` to allow SSH from the Nonprod VPC CIDR or Bastion SG.
 
 ### Cleanup Process:
 
