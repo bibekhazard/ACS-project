@@ -29,7 +29,13 @@
     terraform apply --auto-approve
     
     *   Note the outputs, especially `bastion_public_ip`, `web_server_public_ips`, and `db_server_private_ips`.
-
+    
+*   **Load Test:**
+*   ```bash
+    sudo amazon-linux-extras install epel -y
+    sudo yum install stress -y
+    stress --version
+    stress --cpu 4 --timeout 120s 
 
 *   **Bastion Host:** SSH to the Bastion Host using the `bastion_public_ip` output from `dev/instances`.
     ```bash
